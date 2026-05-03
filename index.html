@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoQuest: Petualangan Robot Penyelamat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: #f0f9ff;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1 / 1;
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .grid-cell.grass { background-color: #dcfce7; }
+        .grid-cell.wall { background-color: #475569; }
+        .grid-cell.lava { background-color: #fee2e2; }
+
+        .block {
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+        .block:active { cursor: grabbing; }
+        
+        .code-slot {
+            min-height: 50px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .robot-anim {
+            animation: bounce-slow 2s infinite ease-in-out;
+        }
+
+        .level-card.active {
+            border: 4px solid #3b82f6;
+            transform: scale(1.05);
+        }
+
+        .modal-overlay {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-blue-50">
+
+    <div id="game-container" class="max-w-6xl mx-auto p-4 flex flex-col h-screen">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-4 bg-white p-4 rounded-2xl shadow-sm">
+            <div>
+                <h1 class="text-2xl text-blue-600">AlgoQuest 🤖</h1>
+                <p class="text-sm text-slate-500">Misi: <span id="mission-text">Bantu Robot mencapai Kristal!</span></p>
+            </div>
+            <div class="flex gap-4 items-center">
+                <div class="bg-yellow-100 px-4 py-2 rounded-full border-2 border-yellow-400 font-bold text-yellow-700">
+                    <i class="fas fa-gem mr-2"></i> Level: <span id="current-level-display">1</span>/5
+                </div>
+                <button onclick="resetLevel()" class="bg-slate-200 hover:bg-slate-300 p-2 rounded-lg transition">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+        </header>
+
+        <main class="flex flex-1 gap-6 overflow-hidden">
+            <!-- Area Pemrograman (Kiri) -->
+            <div class="w-1/3 bg-white p-4 rounded-3xl shadow-xl flex flex-col border-b-8 border-slate-200">
+                <h3 class="text-lg mb-3 text-slate-700 flex items-center">
+                    <i class="fas fa-code mr-2 text-blue-500"></i> Blok Perintah
+                </h3>
+                
+                <!-- Palet Blok -->
+                <div id="block-palette" class="grid grid-cols-1 gap-2 mb-6">
+                    <div class="block p-3 bg-blue-500 text-white rounded-xl shadow-md flex items-center gap-3" draggable="true" data-type="move">
+                        <i class="fas fa-arrow-up"></i> Maju 1 Langkah
+                    </div>
+                    <div class="block p-3 bg-indigo-500 text-white rounded-xl shadow-md flex items-center gap-3" draggable="true" data-type="turn-right">
+                        <i class="fas fa-redo"></i> Putar Kanan
+                    </div>
+                    <div class="block p-3 bg-indigo-500 text-white rounded-xl shadow-md flex items-center gap-3" draggable="true" data-type="turn-left">
+                        <i class="fas fa-undo"></i> Putar Kiri
+                    </div>
+                    <div class="block p-3 bg-purple-500 text-white rounded-xl shadow-md flex items-center gap-3 border-l-4 border-purple-700" draggable="true" data-type="loop-3">
+                        <i class="fas fa-sync"></i> Ulangi 3x
+                    </div>
+                    <div class="block p-3 bg-orange-500 text-white rounded-xl shadow-md flex items-center gap-3" draggable="true" data-type="if-clear">
+                        <i class="fas fa-question-circle"></i> Jika Jalan Kosong
+                    </div>
+                </div>
+
+                <h3 class="text-lg mb-2 text-slate-700">Alur Program Kamu:</h3>
+                <div id="program-area" class="flex-1 overflow-y-auto code-slot p-2 space-y-2 border-2 border-slate-100 rounded-xl mb-4">
+                    <!-- Drop area for blocks -->
+                </div>
+
+                <button id="run-btn" onclick="runProgram()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl text-xl font-bold shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <i class="fas fa-play"></i> JALANKAN PROGRAM
+                </button>
+            </div>
+
+            <!-- Game Board (Kanan) -->
+            <div class="flex-1 bg-white p-6 rounded-3xl shadow-xl flex items-center justify-center relative border-b-8 border-slate-200">
+                <div id="grid-board" class="grid gap-1 border-4 border-slate-800 p-1 bg-slate-800 rounded-lg shadow-2xl">
+                    <!-- Grid cells will be generated here -->
+                </div>
+
+                <!-- Kompas Petunjuk -->
+                <div class="absolute bottom-4 right-4 bg-white/80 p-3 rounded-xl border border-slate-200 text-xs shadow-sm">
+                    <p class="font-bold mb-1">Arah Robot:</p>
+                    <div id="direction-indicator" class="text-blue-600 font-bold">UTARA</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Sukses -->
+    <div id="success-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-3xl max-w-md w-full text-center shadow-2xl transform transition-all scale-110">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-3xl text-blue-600 mb-2">Luar Biasa!</h2>
+            <p class="text-slate-600 mb-6" id="success-message">Kamu berhasil menyelesaikan algoritma ini dengan sempurna.</p>
+            <button onclick="nextLevel()" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold text-lg hover:bg-blue-600 transition">LEVEL BERIKUTNYA</button>
+        </div>
+    </div>
+
+    <!-- Modal Error -->
+    <div id="error-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
+            <div class="text-6xl mb-4">⚠️</div>
+            <h2 class="text-3xl text-red-500 mb-2">Ups, Debugging!</h2>
+            <p class="text-slate-600 mb-6" id="error-message">Robot menabrak tembok atau jatuh ke lava. Ayo periksa urutan perintahmu lagi!</p>
+            <button onclick="closeModals()" class="w-full bg-slate-500 text-white py-3 rounded-xl font-bold text-lg hover:bg-slate-600 transition">COBA LAGI</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA LEVEL ---
+        const LEVELS = [
+            {
+                id: 1,
+                gridSize: 5,
+                start: { x: 0, y: 4, dir: 0 }, // dir: 0:N, 1:E, 2:S, 3:W
+                end: { x: 4, y: 0 },
+                walls: [{x:1, y:1}, {x:1, y:2}, {x:1, y:3}, {x:3, y:1}, {x:3, y:2}, {x:3, y:3}],
+                lava: [],
+                message: "Misi 1: Jalur lurus dan berbelok. Gunakan MAJU dan PUTAR."
+            },
+            {
+                id: 2,
+                gridSize: 5,
+                start: { x: 0, y: 4, dir: 0 },
+                end: { x: 4, y: 4 },
+                walls: [{x:0, y:2}, {x:1, y:2}, {x:2, y:2}, {x:4, y:2}],
+                lava: [{x:3, y:2}],
+                message: "Misi 2: Awas ada LAVA! Kamu harus memutar jalan."
+            },
+            {
+                id: 3,
+                gridSize: 6,
+                start: { x: 0, y: 5, dir: 1 },
+                end: { x: 5, y: 0 },
+                walls: [],
+                lava: [{x:1, y:1}, {x:2, y:2}, {x:3, y:3}],
+                message: "Misi 3: Gunakan REPEAT (Pengulangan) agar kodemu lebih efisien."
+            },
+            {
+                id: 4,
+                gridSize: 7,
+                start: { x: 0, y: 6, dir: 0 },
+                end: { x: 6, y: 0 },
+                walls: [{x:0, y:2}, {x:1, y:2}, {x:2, y:2}, {x:4, y:4}, {x:5, y:4}, {x:6, y:4}],
+                lava: [{x:3, y:0}, {x:3, y:1}, {x:3, y:2}, {x:3, y:3}],
+                message: "Misi 4: Labirin maut! Periksa setiap langkahmu."
+            },
+            {
+                id: 5,
+                gridSize: 5,
+                start: { x: 0, y: 4, dir: 0 },
+                end: { x: 4, y: 0 },
+                walls: [{x:2, y:2}],
+                lava: [{x:0, y:0}, {x:4, y:4}],
+                message: "Misi Terakhir: Buktikan kamu Master Algoritma!"
+            }
+        ];
+
+        let currentLevelIndex = 0;
+        let robotPos = { x: 0, y: 0, dir: 0 };
+        let isRunning = false;
+
+        // --- ENGINE GAME ---
+
+        function initLevel() {
+            const level = LEVELS[currentLevelIndex];
+            robotPos = { ...level.start };
+            
+            document.getElementById('current-level-display').innerText = level.id;
+            document.getElementById('mission-text').innerText = level.message;
+            updateDirectionText();
+
+            const board = document.getElementById('grid-board');
+            board.style.gridTemplateColumns = `repeat(${level.gridSize}, 1fr)`;
+            board.innerHTML = '';
+
+            for (let y = 0; y < level.gridSize; y++) {
+                for (let x = 0; x < level.gridSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.id = `cell-${x}-${y}`;
+                    cell.className = 'grid-cell w-12 h-12 md:w-16 md:h-16 rounded-sm';
+                    
+                    if (level.walls.some(w => w.x === x && w.y === y)) {
+                        cell.classList.add('wall');
+                        cell.innerHTML = '<i class="fas fa-mountain text-slate-400"></i>';
+                    } else if (level.lava.some(l => l.x === x && l.y === y)) {
+                        cell.classList.add('lava');
+                        cell.innerHTML = '<i class="fas fa-fire text-red-500 text-xl"></i>';
+                    } else if (level.end.x === x && level.end.y === y) {
+                        cell.innerHTML = '<div class="robot-anim"><i class="fas fa-gem text-yellow-400 text-3xl drop-shadow-md"></i></div>';
+                    }
+                    board.appendChild(cell);
+                }
+            }
+            renderRobot();
+        }
+
+        function renderRobot() {
+            // Bersihkan robot lama
+            const oldRobot = document.querySelector('.robot-entity');
+            if (oldRobot) oldRobot.remove();
+
+            const cell = document.getElementById(`cell-${robotPos.x}-${robotPos.y}`);
+            const robot = document.createElement('div');
+            robot.className = 'robot-entity absolute inset-0 flex items-center justify-center transition-all duration-300';
+            
+            // Rotasi berdasarkan arah
+            const rotation = robotPos.dir * 90;
+            robot.style.transform = `rotate(${rotation}deg)`;
+            
+            robot.innerHTML = `
+                <div class="relative">
+                    <i class="fas fa-robot text-blue-600 text-4xl md:text-5xl drop-shadow-lg"></i>
+                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                </div>
+            `;
+            cell.appendChild(robot);
+        }
+
+        function updateDirectionText() {
+            const dirs = ["UTARA", "TIMUR", "SELATAN", "BARAT"];
+            document.getElementById('direction-indicator').innerText = dirs[robotPos.dir];
+        }
+
+        // --- LOGIKA PERINTAH ---
+
+        async function runProgram() {
+            if (isRunning) return;
+            isRunning = true;
+            document.getElementById('run-btn').disabled = true;
+            document.getElementById('run-btn').classList.add('opacity-50');
+
+            const blocks = document.querySelectorAll('#program-area .block');
+            const commands = [];
+
+            blocks.forEach(b => {
+                const type = b.getAttribute('data-type');
+                if (type === 'loop-3') {
+                    // Sederhananya, loop 3x ini kita hardcode untuk demo kompleksitas
+                    const moveCmd = { type: 'move' };
+                    commands.push(moveCmd, moveCmd, moveCmd);
+                } else {
+                    commands.push({ type });
+                }
+            });
+
+            if (commands.length === 0) {
+                showError("Program kosong! Tarik beberapa blok ke area program.");
+                stopProgram();
+                return;
+            }
+
+            for (let cmd of commands) {
+                const success = await executeCommand(cmd);
+                if (!success) {
+                    showError();
+                    stopProgram();
+                    return;
+                }
+                await new Promise(r => setTimeout(r, 600));
+            }
+
+            // Cek kemenangan
+            const level = LEVELS[currentLevelIndex];
+            if (robotPos.x === level.end.x && robotPos.y === level.end.y) {
+                showSuccess();
+            } else {
+                showError("Robot belum sampai ke kristal. Coba tambahkan perintah lagi!");
+            }
+            stopProgram();
+        }
+
+        async function executeCommand(cmd) {
+            const level = LEVELS[currentLevelIndex];
+            let newX = robotPos.x;
+            let newY = robotPos.y;
+
+            switch(cmd.type) {
+                case 'move':
+                    if (robotPos.dir === 0) newY--;
+                    if (robotPos.dir === 1) newX++;
+                    if (robotPos.dir === 2) newY++;
+                    if (robotPos.dir === 3) newX--;
+                    break;
+                case 'turn-right':
+                    robotPos.dir = (robotPos.dir + 1) % 4;
+                    renderRobot();
+                    updateDirectionText();
+                    return true;
+                case 'turn-left':
+                    robotPos.dir = (robotPos.dir + 3) % 4;
+                    renderRobot();
+                    updateDirectionText();
+                    return true;
+                case 'if-clear':
+                    // Logika sederhana: jika depan tembok/lava, berhenti. Jika tidak, maju.
+                    return true; // placeholder untuk kompleksitas visual
+            }
+
+            // Cek Batas Grid
+            if (newX < 0 || newX >= level.gridSize || newY < 0 || newY >= level.gridSize) return false;
+
+            // Cek Tembok
+            if (level.walls.some(w => w.x === newX && w.y === newY)) return false;
+            
+            // Cek Lava
+            if (level.lava.some(l => l.x === newX && l.y === newY)) {
+                robotPos.x = newX;
+                robotPos.y = newY;
+                renderRobot();
+                return false;
+            }
+
+            robotPos.x = newX;
+            robotPos.y = newY;
+            renderRobot();
+            return true;
+        }
+
+        function stopProgram() {
+            isRunning = false;
+            document.getElementById('run-btn').disabled = false;
+            document.getElementById('run-btn').classList.remove('opacity-50');
+        }
+
+        // --- UI & MODAL ---
+
+        function showSuccess() {
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
+
+        function showError(msg) {
+            if (msg) document.getElementById('error-message').innerText = msg;
+            else document.getElementById('error-message').innerText = "Robot menabrak rintangan atau keluar jalur! Periksa kodemu.";
+            document.getElementById('error-modal').classList.remove('hidden');
+        }
+
+        function closeModals() {
+            document.getElementById('success-modal').classList.add('hidden');
+            document.getElementById('error-modal').classList.add('hidden');
+            resetLevel();
+        }
+
+        function nextLevel() {
+            currentLevelIndex++;
+            if (currentLevelIndex >= LEVELS.length) {
+                alert("SELAMAT! Kamu telah menyelesaikan semua level AlgoQuest!");
+                currentLevelIndex = 0;
+            }
+            document.getElementById('success-modal').classList.add('hidden');
+            document.getElementById('program-area').innerHTML = '';
+            initLevel();
+        }
+
+        function resetLevel() {
+            initLevel();
+        }
+
+        // --- DRAG AND DROP ---
+
+        const palette = document.getElementById('block-palette');
+        const programArea = document.getElementById('program-area');
+
+        palette.addEventListener('dragstart', e => {
+            if (e.target.classList.contains('block')) {
+                e.dataTransfer.setData('text/plain', e.target.outerHTML);
+            }
+        });
+
+        programArea.addEventListener('dragover', e => {
+            e.preventDefault();
+            programArea.classList.add('bg-blue-100');
+        });
+
+        programArea.addEventListener('dragleave', () => {
+            programArea.classList.remove('bg-blue-100');
+        });
+
+        programArea.addEventListener('drop', e => {
+            e.preventDefault();
+            programArea.classList.remove('bg-blue-100');
+            const data = e.dataTransfer.getData('text/plain');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data;
+            const newBlock = tempDiv.firstChild;
+            
+            // Tambahkan tombol hapus pada blok yang didrop
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '×';
+            deleteBtn.className = 'ml-auto text-white font-bold bg-black/20 hover:bg-black/40 px-2 rounded';
+            deleteBtn.onclick = function() { this.parentElement.remove(); };
+            newBlock.appendChild(deleteBtn);
+            
+            programArea.appendChild(newBlock);
+        });
+
+        // Jalankan Game saat load
+        window.onload = initLevel;
+
+    </script>
+</body>
+</html>
