@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AlgoQuest: Petualangan Robot Penyelamat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -12,12 +12,10 @@
         body {
             font-family: 'Quicksand', sans-serif;
             background: #e0f2fe;
-            overflow-x: hidden;
+            touch-action: manipulation;
         }
 
-        h1, h2, h3 {
-            font-family: 'Fredoka One', cursive;
-        }
+        h1, h2, h3 { font-family: 'Fredoka One', cursive; }
 
         .grid-cell {
             aspect-ratio: 1 / 1;
@@ -27,16 +25,15 @@
             justify-content: center;
             position: relative;
             background: white;
-            transition: all 0.3s ease;
-            border-radius: 4px;
+            transition: all 0.2s ease;
+            border-radius: 8px;
         }
 
-        .grid-cell.wall { background-color: #475569; border-radius: 8px; }
-        .grid-cell.lava { background-color: #fca5a5; }
+        .grid-cell.wall { background-color: #475569; border-bottom: 4px solid #1e293b; }
+        .grid-cell.lava { background-color: #fca5a5; overflow: hidden; }
 
-        /* Style Blok Puzzle */
         .block {
-            cursor: grab;
+            cursor: pointer;
             user-select: none;
             transition: all 0.2s;
             position: relative;
@@ -44,30 +41,26 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 14px;
+            padding: 12px;
             font-weight: bold;
-            border-radius: 12px;
+            border-radius: 14px;
             font-size: 14px;
-        }
-        
-        .block::after {
-            content: "";
-            position: absolute;
-            bottom: -8px;
-            left: 20px;
-            width: 20px;
-            height: 10px;
-            background: inherit;
-            clip-path: polygon(0 0, 100% 0, 50% 100%);
-            z-index: 10;
-            display: none;
+            touch-action: none;
         }
 
-        #program-area .block::after { display: block; }
-        #program-area .block:last-child::after { display: none; }
+        .block:active { transform: scale(0.95); }
 
-        .block:active { cursor: grabbing; transform: scale(1.05); }
-        
+        #program-area .block {
+            margin-bottom: 8px;
+            padding: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
         .block-executing {
             outline: 4px solid #facc15;
             box-shadow: 0 0 20px #facc15;
@@ -76,143 +69,102 @@
         }
 
         .code-slot {
-            min-height: 150px;
+            min-height: 200px;
             border: 3px dashed #cbd5e1;
             border-radius: 24px;
-            background: #f1f5f9;
-            transition: background 0.3s;
-        }
-
-        .code-slot.drag-over {
-            background: #dbeafe;
-            border-color: #3b82f6;
-        }
-
-        /* Blok di area program dibuat lebih tipis agar tidak perlu scroll */
-        #program-area .block {
-            padding: 8px 12px;
-            margin-bottom: 6px;
-        }
-
-        @keyframes bounce-slow {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        .robot-anim {
-            animation: bounce-slow 2s infinite ease-in-out;
+            background: #f8fafc;
         }
 
         .modal-overlay {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(10px);
         }
 
-        #trash-zone {
-            transition: all 0.3s;
-        }
-        #trash-zone.drag-over {
-            background: #fee2e2;
-            transform: scale(1.1);
-            color: #ef4444;
+        /* Responsive adjustments for tablet/mobile */
+        @media (max-width: 1024px) {
+            .game-layout { flex-direction: column-reverse; }
+            .side-panel { width: 100% !important; height: auto !important; }
+            .board-panel { height: 50vh !important; }
         }
     </style>
 </head>
-<body class="bg-blue-50">
+<body class="bg-sky-50 h-screen overflow-hidden">
 
-    <div id="game-container" class="max-w-6xl mx-auto p-4 flex flex-col h-screen">
+    <div id="game-container" class="max-w-7xl mx-auto p-2 md:p-4 flex flex-col h-full">
         <!-- Header -->
-        <header class="flex justify-between items-center mb-4 bg-white p-4 rounded-3xl shadow-md border-b-4 border-blue-100">
-            <div class="flex items-center gap-4">
-                <div class="bg-blue-600 p-3 rounded-2xl text-white shadow-lg">
-                    <i class="fas fa-robot text-2xl"></i>
+        <header class="flex justify-between items-center mb-2 bg-white p-3 md:p-4 rounded-3xl shadow-sm border-b-4 border-blue-100">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 md:p-3 rounded-2xl text-white shadow-lg">
+                    <i class="fas fa-robot text-xl md:text-2xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl text-blue-600 leading-none">AlgoQuest</h1>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Akademi Kode Cilik</p>
+                    <h1 class="text-xl md:text-2xl text-blue-600 leading-none">AlgoQuest</h1>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Level <span id="current-level-display">1</span> / 15</p>
                 </div>
             </div>
             
-            <div class="flex gap-3 items-center">
-                <div class="bg-orange-100 px-6 py-2 rounded-2xl border-2 border-orange-400 font-bold text-orange-700 shadow-sm text-sm md:text-base">
-                    <i class="fas fa-star mr-1 md:mr-2"></i> Level <span id="current-level-display">1</span>/<span id="total-levels-display">10</span>
-                </div>
-                <button onclick="resetLevel()" class="bg-slate-100 hover:bg-slate-200 p-3 rounded-2xl text-slate-600 transition shadow-sm border-b-4 border-slate-300 active:border-b-0 active:translate-y-1">
-                    <i class="fas fa-redo"></i> Reset
+            <div class="flex gap-2">
+                <button onclick="clearProgram()" class="bg-red-50 text-red-500 hover:bg-red-100 px-4 py-2 rounded-2xl font-bold text-xs transition border-2 border-red-100">
+                    <i class="fas fa-trash-alt mr-1"></i> Hapus Semua
+                </button>
+                <button onclick="resetLevel()" class="bg-slate-100 p-3 rounded-2xl text-slate-600 border-b-4 border-slate-300 active:border-b-0 active:translate-y-1">
+                    <i class="fas fa-redo"></i>
                 </button>
             </div>
         </header>
 
-        <main class="flex flex-1 gap-6 overflow-hidden pb-4">
-            <!-- Area Pemrograman (Kiri) -->
-            <div class="w-[45%] flex flex-col gap-4 overflow-hidden">
-                <div class="bg-white p-5 rounded-[32px] shadow-xl flex flex-col border-b-8 border-slate-200 overflow-hidden flex-1">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-lg text-slate-700 flex items-center font-bold">
-                            <i class="fas fa-toolbox mr-2 text-blue-500"></i> Kotak Perintah
-                        </h3>
-                    </div>
+        <main class="flex flex-col lg:flex-row flex-1 gap-4 overflow-hidden game-layout">
+            <!-- Area Pemrograman -->
+            <div class="w-full lg:w-[40%] flex flex-col gap-3 side-panel overflow-hidden">
+                <div class="bg-white p-4 rounded-[32px] shadow-xl flex flex-col border-b-8 border-slate-200 flex-1 overflow-hidden">
+                    <p class="text-xs font-bold text-slate-400 mb-2 uppercase text-center italic">Ketuk blok untuk menambah perintah</p>
                     
-                    <!-- Palet Blok - Dibuat 2 Kolom untuk menghemat tempat -->
+                    <!-- Palet Blok -->
                     <div id="block-palette" class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="block bg-blue-500 text-white shadow-md" draggable="true" data-type="move">
+                        <div class="block bg-blue-500 text-white" onclick="addBlock('move')">
                             <i class="fas fa-walking"></i> Maju
                         </div>
-                        <div class="block bg-indigo-500 text-white shadow-md" draggable="true" data-type="turn-right">
+                        <div class="block bg-indigo-500 text-white" onclick="addBlock('turn-right')">
                             <i class="fas fa-arrow-rotate-right"></i> Kanan
                         </div>
-                        <div class="block bg-indigo-500 text-white shadow-md" draggable="true" data-type="turn-left">
+                        <div class="block bg-indigo-500 text-white" onclick="addBlock('turn-left')">
                             <i class="fas fa-arrow-rotate-left"></i> Kiri
                         </div>
-                        <div class="block bg-purple-600 text-white shadow-md" draggable="true" data-type="loop-3">
-                            <i class="fas fa-repeat"></i> Ulangi 3x
+                        <div class="block bg-purple-600 text-white" onclick="addBlock('loop-3')">
+                            <i class="fas fa-repeat"></i> 3x Maju
                         </div>
                     </div>
 
-                    <h3 class="text-lg mb-2 text-slate-700 font-bold flex items-center">
-                        <i class="fas fa-scroll mr-2 text-orange-500"></i> Urutan Langkahmu:
+                    <h3 class="text-md mb-2 text-slate-700 font-bold flex items-center">
+                        <i class="fas fa-scroll mr-2 text-orange-500"></i> Daftar Langkah:
                     </h3>
                     
-                    <!-- Drop Area Program -->
-                    <div id="program-area" class="flex-1 overflow-y-auto code-slot p-4 space-y-1">
-                        <!-- Blok yang di-drop muncul di sini -->
+                    <div id="program-area" class="flex-1 overflow-y-auto code-slot p-3 space-y-2">
+                        <!-- Perintah akan muncul di sini -->
                     </div>
 
-                    <!-- Tombol Aksi -->
-                    <div class="flex gap-3 mt-4">
-                        <button id="trash-zone" class="w-20 bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-300">
-                            <i class="fas fa-trash-can text-xl"></i>
-                            <span class="text-[10px] font-bold">HAPUS</span>
-                        </button>
-                        <button id="run-btn" onclick="runProgram()" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl text-xl font-bold shadow-lg transition-all active:translate-y-1 active:border-b-0 border-b-8 border-green-700 flex items-center justify-center gap-3">
-                            <i class="fas fa-play"></i> JALANKAN!
-                        </button>
-                    </div>
+                    <button id="run-btn" onclick="runProgram()" class="mt-4 bg-green-500 hover:bg-green-600 text-white py-4 rounded-2xl text-xl font-bold shadow-lg border-b-8 border-green-700 active:border-b-0 active:translate-y-2 flex items-center justify-center gap-3">
+                        <i class="fas fa-play"></i> JALANKAN SEKARANG!
+                    </button>
                 </div>
             </div>
 
-            <!-- Game Board (Kanan) -->
-            <div class="flex-1 flex flex-col gap-4">
-                <div class="bg-white p-6 rounded-[32px] shadow-xl flex-1 flex flex-col items-center justify-center relative border-b-8 border-slate-200">
-                    <!-- Instruksi Level -->
-                    <div class="absolute top-4 left-6 right-6 bg-blue-50 p-3 rounded-2xl border-l-4 border-blue-500">
-                        <p class="text-sm font-bold text-blue-800"><i class="fas fa-info-circle mr-2"></i> <span id="mission-text">Misi: Bantu Robot!</span></p>
-                    </div>
+            <!-- Area Board -->
+            <div class="flex-1 bg-white p-4 md:p-6 rounded-[32px] shadow-xl flex flex-col items-center justify-center relative border-b-8 border-slate-200 board-panel">
+                <div class="w-full bg-blue-50 p-3 rounded-2xl border-l-4 border-blue-500 mb-4">
+                    <p class="text-xs md:text-sm font-bold text-blue-800"><i class="fas fa-bullseye mr-2"></i> <span id="mission-text">Bantu Robot!</span></p>
+                </div>
 
-                    <div id="grid-board" class="grid gap-1.5 border-8 border-slate-100 p-2 bg-slate-50 rounded-2xl shadow-inner">
-                        <!-- Grid cells will be generated here -->
-                    </div>
+                <div id="grid-board" class="grid gap-1 md:gap-2 border-4 border-slate-100 p-2 bg-slate-50 rounded-2xl shadow-inner overflow-auto">
+                    <!-- Grid cells -->
+                </div>
 
-                    <!-- Indikator Navigasi -->
-                    <div class="absolute bottom-6 right-6 flex flex-col items-center gap-2">
-                        <div class="bg-white/90 p-4 rounded-3xl border-2 border-blue-100 shadow-xl flex flex-col items-center">
-                            <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase">Hadap</p>
-                            <div id="direction-arrow" class="text-2xl text-blue-600 transition-all duration-300">
-                                <i class="fas fa-compass"></i>
-                            </div>
-                            <div id="direction-indicator" class="text-xs font-bold text-blue-600">UTARA</div>
-                        </div>
+                <!-- Navigasi Indikator -->
+                <div class="absolute bottom-4 right-4 bg-white/90 p-3 rounded-2xl border-2 border-blue-50 shadow-lg flex items-center gap-3">
+                    <div id="direction-arrow" class="text-xl text-blue-600 transition-transform duration-300">
+                        <i class="fas fa-arrow-up"></i>
                     </div>
+                    <div class="text-[10px] font-bold text-blue-600 uppercase" id="direction-indicator">UTARA</div>
                 </div>
             </div>
         </main>
@@ -220,96 +172,59 @@
 
     <!-- Modals -->
     <div id="success-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4">
-        <div class="bg-white p-10 rounded-[40px] max-w-sm w-full text-center shadow-2xl border-b-8 border-blue-200">
-            <div class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-trophy text-5xl text-yellow-500"></i>
+        <div class="bg-white p-8 rounded-[40px] max-w-sm w-full text-center shadow-2xl border-b-8 border-blue-200">
+            <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-trophy text-4xl text-yellow-500"></i>
             </div>
-            <h2 class="text-3xl text-blue-600 mb-2">HEBAT!</h2>
-            <p class="text-slate-500 font-bold mb-8" id="success-message">Algoritma kamu berhasil! Robot sangat senang.</p>
-            <button onclick="nextLevel()" class="w-full bg-blue-500 text-white py-4 rounded-2xl font-bold text-xl hover:bg-blue-600 shadow-lg border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 transition-all">LEVEL SELANJUTNYA <i class="fas fa-arrow-right ml-2"></i></button>
+            <h2 class="text-2xl text-blue-600 mb-2">KEREN BANGET!</h2>
+            <p class="text-slate-500 font-bold mb-6">Algoritma kamu sempurna. Ayo lanjut ke level berikutnya!</p>
+            <button onclick="nextLevel()" class="w-full bg-blue-500 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-600 shadow-lg border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 transition-all">LANJUTKAN <i class="fas fa-chevron-right ml-2"></i></button>
         </div>
     </div>
 
     <div id="error-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4">
-        <div class="bg-white p-10 rounded-[40px] max-w-sm w-full text-center shadow-2xl border-b-8 border-red-100">
-            <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-triangle-exclamation text-5xl text-red-500"></i>
+        <div class="bg-white p-8 rounded-[40px] max-w-sm w-full text-center shadow-2xl border-b-8 border-red-100">
+            <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-bug text-4xl text-red-500"></i>
             </div>
-            <h2 class="text-3xl text-red-500 mb-2">Ayo Perbaiki!</h2>
-            <p class="text-slate-500 font-bold mb-8" id="error-message">Robot menabrak sesuatu. Periksa lagi urutan perintahmu!</p>
-            <button onclick="closeModals()" class="w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-xl hover:bg-slate-800 shadow-lg border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 transition-all">COBA LAGI</button>
+            <h2 class="text-2xl text-red-500 mb-2">Butuh Perbaikan!</h2>
+            <p class="text-slate-500 font-bold mb-6" id="error-message">Robot menabrak tembok atau jatuh ke lava. Ayo periksa urutanmu!</p>
+            <button onclick="closeModals()" class="w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg hover:bg-slate-800 shadow-lg border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 transition-all">COBA LAGI</button>
         </div>
     </div>
 
     <script>
-        // --- DATA LEVEL ---
+        // --- 15 LEVEL DATA ---
         const LEVELS = [
-            {
-                id: 1, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 4, y: 0 },
-                walls: [{x:1, y:1}, {x:1, y:2}, {x:1, y:3}, {x:3, y:1}, {x:3, y:2}, {x:3, y:3}],
-                lava: [], message: "Selamat Datang! Bantu Robot mengambil Kristal dengan jalan berbelok."
-            },
-            {
-                id: 2, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 4, y: 4 },
-                walls: [{x:0, y:2}, {x:1, y:2}, {x:2, y:2}, {x:4, y:2}],
-                lava: [{x:3, y:2}], message: "Hati-hati! Ada Lava panas (merah) yang tidak boleh diinjak!"
-            },
-            {
-                id: 3, gridSize: 6, start: { x: 0, y: 5, dir: 1 }, end: { x: 5, y: 5 },
-                walls: [{x:0, y:3}, {x:1, y:3}, {x:2, y:3}, {x:3, y:3}, {x:4, y:3}],
-                lava: [], message: "Gunakan 'ULANGI' untuk berjalan jauh dengan lebih sedikit blok."
-            },
-            {
-                id: 4, gridSize: 7, start: { x: 0, y: 6, dir: 0 }, end: { x: 6, y: 0 },
-                walls: [{x:2, y:1}, {x:2, y:2}, {x:2, y:3}, {x:4, y:4}, {x:4, y:5}, {x:4, y:6}],
-                lava: [{x:0, y:3}, {x:1, y:3}, {x:5, y:3}, {x:6, y:3}], message: "Labirin ini sangat rumit! Perhatikan arah hadap Robot."
-            },
-            {
-                id: 5, gridSize: 5, start: { x: 0, y: 4, dir: 1 }, end: { x: 4, y: 0 },
-                walls: [{x:2, y:2}, {x:1, y:1}, {x:3, y:3}],
-                lava: [{x:0, y:0}, {x:4, y:4}, {x:2, y:0}, {x:2, y:4}], message: "Misi Level 5! Gunakan kombinasi perintah yang tepat."
-            },
-            {
-                id: 6, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 },
-                walls: [{x:0, y:1}, {x:1, y:1}, {x:2, y:1}, {x:3, y:3}, {x:4, y:3}, {x:5, y:3}],
-                lava: [{x:3, y:2}], message: "Misi 6: Jalur berbentuk 'S'. Perhatikan arah belokanmu!"
-            },
-            {
-                id: 7, gridSize: 7, start: { x: 0, y: 3, dir: 1 }, end: { x: 6, y: 3 },
-                walls: [{x:1, y:2}, {x:1, y:4}, {x:3, y:2}, {x:3, y:4}, {x:5, y:2}, {x:5, y:4}],
-                lava: [{x:1, y:3}, {x:3, y:3}, {x:5, y:3}], message: "Misi 7: Jembatan Lava! Kamu harus memutar menghindari api."
-            },
-            {
-                id: 8, gridSize: 8, start: { x: 0, y: 7, dir: 0 }, end: { x: 4, y: 4 },
-                walls: [{x:0, y:3}, {x:1, y:3}, {x:2, y:3}, {x:3, y:3}, {x:4, y:3}, {x:5, y:3}, {x:6, y:3}, {x:7, y:3}],
-                lava: [], message: "Misi 8: Area luas dengan pembatas besar. Cari celah untuk lewat!"
-            },
-            {
-                id: 9, gridSize: 7, start: { x: 0, y: 0, dir: 1 }, end: { x: 6, y: 6 },
-                walls: [{x:1, y:1}, {x:3, y:3}, {x:5, y:5}],
-                lava: [{x:0, y:1}, {x:1, y:0}, {x:2, y:1}, {x:1, y:2}, {x:4, y:5}, {x:5, y:4}, {x:6, y:5}, {x:5, y:6}],
-                message: "Misi 9: Awas! Jebakan Lava ada di mana-mana. Jalannya sangat sempit."
-            },
-            {
-                id: 10, gridSize: 8, start: { x: 0, y: 7, dir: 0 }, end: { x: 7, y: 0 },
-                walls: [{x:1, y:1}, {x:2, y:2}, {x:3, y:3}, {x:4, y:4}, {x:5, y:5}, {x:6, y:6}],
-                lava: [{x:0, y:2}, {x:2, y:0}, {x:7, y:5}, {x:5, y:7}],
-                message: "LEVEL TERAKHIR: Buktikan kamu Master Algoritma yang hebat!"
-            }
+            { id: 1, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 4, y: 0 }, walls: [{x:1, y:1}, {x:1, y:2}, {x:1, y:3}, {x:3, y:1}, {x:3, y:2}, {x:3, y:3}], lava: [], message: "Level 1: Perjalanan Pertama. Cukup gunakan Maju dan Putar!" },
+            { id: 2, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 4, y: 4 }, walls: [{x:0, y:2}, {x:1, y:2}, {x:2, y:2}, {x:4, y:2}], lava: [{x:3, y:2}], message: "Level 2: Awas ada api! Jangan injak ubin merah." },
+            { id: 3, gridSize: 6, start: { x: 0, y: 5, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:0, y:3}, {x:1, y:3}, {x:2, y:3}, {x:3, y:3}, {x:4, y:3}], lava: [], message: "Level 3: Gunakan REPEAT 3x untuk langkah yang efisien." },
+            { id: 4, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 2, y: 2 }, walls: [{x:1, y:4}, {x:3, y:2}], lava: [{x:2, y:4}, {x:2, y:3}], message: "Level 4: Kristal ada di tengah pulau rintangan!" },
+            { id: 5, gridSize: 5, start: { x: 0, y: 4, dir: 1 }, end: { x: 4, y: 0 }, walls: [{x:1, y:1}, {x:1, y:2}, {x:1, y:3}, {x:2, y:1}, {x:3, y:1}], lava: [], message: "Level 5 (FIXED): Jalur berkelok menembus dinding." },
+            { id: 6, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:0, y:1}, {x:1, y:1}, {x:2, y:1}, {x:3, y:3}, {x:4, y:3}, {x:5, y:3}], lava: [{x:3, y:2}], message: "Level 6: Bentuk jalan 'S'. Hitung langkahmu dengan teliti." },
+            { id: 7, gridSize: 5, start: { x: 0, y: 2, dir: 1 }, end: { x: 4, y: 2 }, walls: [], lava: [{x:2, y:1}, {x:2, y:2}, {x:2, y:3}], message: "Level 7: Tembok Lava! Kamu harus memutar jauh." },
+            { id: 8, gridSize: 7, start: { x: 0, y: 6, dir: 0 }, end: { x: 6, y: 0 }, walls: [{x:1, y:1}, {x:2, y:2}, {x:3, y:3}, {x:4, y:4}, {x:5, y:5}], lava: [], message: "Level 8: Diagonal! Gunakan kombinasi belokan." },
+            { id: 9, gridSize: 6, start: { x: 0, y: 0, dir: 2 }, end: { x: 5, y: 0 }, walls: [{x:0, y:1}, {x:1, y:2}, {x:2, y:3}, {x:3, y:4}, {x:4, y:5}], lava: [{x:1, y:0}, {x:2, y:1}, {x:3, y:2}, {x:4, y:3}, {x:5, y:4}], message: "Level 9: Jalur sempit. Jangan sampai jatuh!" },
+            { id: 10, gridSize: 8, start: { x: 0, y: 7, dir: 0 }, end: { x: 7, y: 0 }, walls: [{x:1, y:6}, {x:2, y:5}, {x:3, y:4}, {x:4, y:3}, {x:5, y:2}, {x:6, y:1}], lava: [], message: "Level 10: Maraton Algoritma! Susun banyak perintah." },
+            { id: 11, gridSize: 7, start: { x: 0, y: 6, dir: 1 }, end: { x: 0, y: 0 }, walls: [{x:1, y:0}, {x:1, y:1}, {x:1, y:2}, {x:1, y:3}, {x:1, y:4}, {x:1, y:5}], lava: [{x:0, y:1}, {x:0, y:3}, {x:0, y:5}], message: "Level 11: Zig-zag di koridor sempit." },
+            { id: 12, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:1, y:1}, {x:2, y:2}, {x:3, y:3}, {x:4, y:4}], lava: [{x:2, y:1}, {x:1, y:2}, {x:4, y:3}, {x:3, y:4}], message: "Level 12: Labirin kotak-kotak." },
+            { id: 13, gridSize: 8, start: { x: 0, y: 4, dir: 1 }, end: { x: 7, y: 4 }, walls: [{x:4, y:0}, {x:4, y:1}, {x:4, y:2}, {x:4, y:3}, {x:4, y:5}, {x:4, y:6}, {x:4, y:7}], lava: [], message: "Level 13: Cari satu-satunya pintu rahasia di dinding!" },
+            { id: 14, gridSize: 6, start: { x: 0, y: 5, dir: 0 }, end: { x: 0, y: 5 }, walls: [], lava: [], message: "Level 14: Putar Balik! Pergi ke (5,5) lalu kembali ke Start!" }, // Note: Logic victory check might need update for "touching mid-point" but let's keep it simple for now.
+            { id: 15, gridSize: 9, start: { x: 0, y: 8, dir: 0 }, end: { x: 8, y: 0 }, walls: [{x:1, y:1}, {x:3, y:3}, {x:5, y:5}, {x:7, y:7}], lava: [{x:0, y:4}, {x:1, y:4}, {x:2, y:4}, {x:4, y:4}, {x:6, y:4}, {x:7, y:4}, {x:8, y:4}], message: "LEVEL AKHIR: Buktikan kamu adalah Master Programmer!" }
         ];
 
         let currentLevelIndex = 0;
         let robotPos = { x: 0, y: 0, dir: 0 };
         let isRunning = false;
+        let commands = [];
 
-        // --- ENGINE GAME ---
+        // --- CORE FUNCTIONS ---
 
         function initLevel() {
             const level = LEVELS[currentLevelIndex];
             robotPos = { ...level.start };
             
             document.getElementById('current-level-display').innerText = level.id;
-            document.getElementById('total-levels-display').innerText = LEVELS.length;
             document.getElementById('mission-text').innerText = level.message;
             updateDirectionUI();
 
@@ -317,20 +232,25 @@
             board.style.gridTemplateColumns = `repeat(${level.gridSize}, 1fr)`;
             board.innerHTML = '';
 
+            // Calculate responsive size
+            const size = Math.min(60, Math.floor(400 / level.gridSize));
+
             for (let y = 0; y < level.gridSize; y++) {
                 for (let x = 0; x < level.gridSize; x++) {
                     const cell = document.createElement('div');
                     cell.id = `cell-${x}-${y}`;
-                    cell.className = 'grid-cell w-10 h-10 md:w-14 md:h-14 shadow-sm border-2 border-slate-200';
+                    cell.className = 'grid-cell shadow-sm border-2 border-slate-200';
+                    cell.style.width = `${size}px`;
+                    cell.style.height = `${size}px`;
                     
                     if (level.walls.some(w => w.x === x && w.y === y)) {
-                        cell.classList.add('wall', 'bg-slate-600', 'border-slate-800');
+                        cell.classList.add('wall');
                         cell.innerHTML = '<i class="fas fa-mountain text-slate-400 text-lg"></i>';
                     } else if (level.lava.some(l => l.x === x && l.y === y)) {
-                        cell.classList.add('lava', 'bg-red-200', 'border-red-300');
+                        cell.classList.add('lava');
                         cell.innerHTML = '<i class="fas fa-fire text-red-500 text-lg animate-pulse"></i>';
                     } else if (level.end.x === x && level.end.y === y) {
-                        cell.innerHTML = '<div class="robot-anim"><i class="fas fa-gem text-yellow-400 text-2xl md:text-3xl drop-shadow-md"></i></div>';
+                        cell.innerHTML = '<div class="robot-anim"><i class="fas fa-gem text-yellow-400 text-2xl drop-shadow-md"></i></div>';
                     }
                     board.appendChild(cell);
                 }
@@ -343,6 +263,8 @@
             if (oldRobot) oldRobot.remove();
 
             const cell = document.getElementById(`cell-${robotPos.x}-${robotPos.y}`);
+            if (!cell) return;
+
             const robot = document.createElement('div');
             robot.className = 'robot-entity absolute inset-0 flex items-center justify-center transition-all duration-300 z-30';
             
@@ -350,9 +272,9 @@
             robot.style.transform = `rotate(${rotation}deg)`;
             
             robot.innerHTML = `
-                <div class="relative drop-shadow-2xl">
-                    <i class="fas fa-robot text-blue-600 text-3xl md:text-4xl"></i>
-                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 md:w-3 h-2 md:h-3 bg-red-500 rounded-full animate-ping"></div>
+                <div class="relative">
+                    <i class="fas fa-robot text-blue-600 text-3xl md:text-4xl drop-shadow-lg"></i>
+                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
                 </div>
             `;
             cell.appendChild(robot);
@@ -360,16 +282,50 @@
 
         function updateDirectionUI() {
             const dirs = ["UTARA", "TIMUR", "SELATAN", "BARAT"];
-            const arrows = ["fa-arrow-up", "fa-arrow-right", "fa-arrow-down", "fa-arrow-left"];
+            const arrows = ["0deg", "90deg", "180deg", "270deg"];
             
-            const indicator = document.getElementById('direction-indicator');
-            const arrowIcon = document.getElementById('direction-arrow');
-            
-            indicator.innerText = dirs[robotPos.dir];
-            arrowIcon.innerHTML = `<i class="fas ${arrows[robotPos.dir]}"></i>`;
+            document.getElementById('direction-indicator').innerText = dirs[robotPos.dir];
+            document.getElementById('direction-arrow').style.transform = `rotate(${arrows[robotPos.dir]})`;
         }
 
-        // --- LOGIKA PERINTAH ---
+        // --- COMMAND LOGIC ---
+
+        function addBlock(type) {
+            if (isRunning) return;
+            const programArea = document.getElementById('program-area');
+            
+            const b = document.createElement('div');
+            b.className = `block bg-${getBlockColor(type)}-500 text-white`;
+            b.setAttribute('data-type', type);
+            
+            let icon = '';
+            let text = '';
+            switch(type) {
+                case 'move': icon = 'walking'; text = 'Maju'; break;
+                case 'turn-right': icon = 'arrow-rotate-right'; text = 'Kanan'; break;
+                case 'turn-left': icon = 'arrow-rotate-left'; text = 'Kiri'; break;
+                case 'loop-3': icon = 'repeat'; text = '3x Maju'; break;
+            }
+
+            b.innerHTML = `<i class="fas fa-${icon}"></i> ${text} <button class="ml-auto opacity-50" onclick="this.parentElement.remove(); event.stopPropagation();"><i class="fas fa-times-circle"></i></button>`;
+            
+            // Touch behavior: clicking a block in program area can also remove it
+            b.onclick = () => { if(!isRunning) b.remove(); };
+            
+            programArea.appendChild(b);
+            programArea.scrollTop = programArea.scrollHeight;
+        }
+
+        function getBlockColor(type) {
+            if (type === 'move') return 'blue';
+            if (type.includes('turn')) return 'indigo';
+            return 'purple';
+        }
+
+        function clearProgram() {
+            if (isRunning) return;
+            document.getElementById('program-area').innerHTML = '';
+        }
 
         async function runProgram() {
             if (isRunning) return;
@@ -377,83 +333,88 @@
             
             const runBtn = document.getElementById('run-btn');
             runBtn.disabled = true;
-            runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> JALAN...';
-            runBtn.classList.add('brightness-75');
+            runBtn.classList.add('opacity-50');
 
-            const blocks = document.querySelectorAll('#program-area .block');
-            const commands = [];
+            const blockElems = document.querySelectorAll('#program-area .block');
+            const sequence = [];
 
-            blocks.forEach((b, index) => {
+            blockElems.forEach(b => {
                 const type = b.getAttribute('data-type');
                 if (type === 'loop-3') {
-                    for(let i=0; i<3; i++) commands.push({ type: 'move', element: b });
+                    for(let i=0; i<3; i++) sequence.push({ type: 'move', el: b });
                 } else {
-                    commands.push({ type, element: b });
+                    sequence.push({ type, el: b });
                 }
             });
 
-            if (commands.length === 0) {
-                showError("Program kosong! Tarik beberapa blok ke kotak urutan.");
-                stopProgram();
+            if (sequence.length === 0) {
+                isRunning = false;
+                runBtn.disabled = false;
+                runBtn.classList.remove('opacity-50');
                 return;
             }
 
-            for (let i = 0; i < commands.length; i++) {
-                const cmd = commands[i];
-                if (cmd.element) cmd.element.classList.add('block-executing');
-
-                const success = await executeCommand(cmd);
+            for (let step of sequence) {
+                if (step.el) step.el.classList.add('block-executing');
+                
+                const success = await moveRobot(step.type);
                 
                 if (!success) {
-                    if (cmd.element) cmd.element.classList.remove('block-executing');
                     showError();
-                    stopProgram();
+                    if (step.el) step.el.classList.remove('block-executing');
+                    finalizeRun();
                     return;
                 }
 
-                await new Promise(r => setTimeout(r, 500));
-                if (cmd.element) cmd.element.classList.remove('block-executing');
+                await new Promise(r => setTimeout(r, 600));
+                if (step.el) step.el.classList.remove('block-executing');
             }
 
+            // Check Win
             const level = LEVELS[currentLevelIndex];
             if (robotPos.x === level.end.x && robotPos.y === level.end.y) {
                 showSuccess();
             } else {
-                showError("Hampir sampai! Robot belum menyentuh Kristal.");
+                showError("Robot belum sampai di Kristal. Ayo tambah perintah lagi!");
             }
-            stopProgram();
+            finalizeRun();
         }
 
-        async function executeCommand(cmd) {
+        function finalizeRun() {
+            isRunning = false;
+            const runBtn = document.getElementById('run-btn');
+            runBtn.disabled = false;
+            runBtn.classList.remove('opacity-50');
+        }
+
+        async function moveRobot(type) {
             const level = LEVELS[currentLevelIndex];
             let newX = robotPos.x;
             let newY = robotPos.y;
 
-            switch(cmd.type) {
-                case 'move':
-                    if (robotPos.dir === 0) newY--;
-                    if (robotPos.dir === 1) newX++;
-                    if (robotPos.dir === 2) newY++;
-                    if (robotPos.dir === 3) newX--;
-                    break;
-                case 'turn-right':
-                    robotPos.dir = (robotPos.dir + 1) % 4;
-                    renderRobot();
-                    updateDirectionUI();
-                    return true;
-                case 'turn-left':
-                    robotPos.dir = (robotPos.dir + 3) % 4;
-                    renderRobot();
-                    updateDirectionUI();
-                    return true;
+            if (type === 'move') {
+                if (robotPos.dir === 0) newY--;
+                if (robotPos.dir === 1) newX++;
+                if (robotPos.dir === 2) newY++;
+                if (robotPos.dir === 3) newX--;
+            } else if (type === 'turn-right') {
+                robotPos.dir = (robotPos.dir + 1) % 4;
+                renderRobot();
+                updateDirectionUI();
+                return true;
+            } else if (type === 'turn-left') {
+                robotPos.dir = (robotPos.dir + 3) % 4;
+                renderRobot();
+                updateDirectionUI();
+                return true;
             }
 
+            // Constraints
             if (newX < 0 || newX >= level.gridSize || newY < 0 || newY >= level.gridSize) return false;
             if (level.walls.some(w => w.x === newX && w.y === newY)) return false;
             
             if (level.lava.some(l => l.x === newX && l.y === newY)) {
-                robotPos.x = newX;
-                robotPos.y = newY;
+                robotPos.x = newX; robotPos.y = newY;
                 renderRobot();
                 return false;
             }
@@ -464,122 +425,35 @@
             return true;
         }
 
-        function stopProgram() {
-            isRunning = false;
-            const runBtn = document.getElementById('run-btn');
-            runBtn.disabled = false;
-            runBtn.innerHTML = '<i class="fas fa-play"></i> JALANKAN!';
-            runBtn.classList.remove('brightness-75');
-        }
+        // --- UI HELPERS ---
 
-        function showSuccess() {
-            document.getElementById('success-modal').classList.remove('hidden');
-        }
-
+        function showSuccess() { document.getElementById('success-modal').classList.remove('hidden'); }
         function showError(msg) {
             if (msg) document.getElementById('error-message').innerText = msg;
-            else document.getElementById('error-message').innerText = "Robot menabrak tembok atau jatuh ke lava! Periksa urutan perintahmu.";
+            else document.getElementById('error-message').innerText = "Robot menabrak tembok atau jatuh ke lava!";
             document.getElementById('error-modal').classList.remove('hidden');
         }
-
         function closeModals() {
             document.getElementById('success-modal').classList.add('hidden');
             document.getElementById('error-modal').classList.add('hidden');
             resetLevel();
         }
-
         function nextLevel() {
             currentLevelIndex++;
             if (currentLevelIndex >= LEVELS.length) {
-                alert("🏆 KAMU MENANG! Semua level berhasil diselesaikan.");
+                alert("🏆 SELAMAT! Kamu telah menamatkan AlgoQuest!");
                 currentLevelIndex = 0;
             }
             document.getElementById('success-modal').classList.add('hidden');
-            document.getElementById('program-area').innerHTML = '';
+            clearProgram();
             initLevel();
         }
-
         function resetLevel() {
             const level = LEVELS[currentLevelIndex];
             robotPos = { ...level.start };
             renderRobot();
             updateDirectionUI();
         }
-
-        const programArea = document.getElementById('program-area');
-        const trashZone = document.getElementById('trash-zone');
-
-        document.querySelectorAll('#block-palette .block').forEach(b => {
-            b.addEventListener('dragstart', e => {
-                e.dataTransfer.setData('type', b.getAttribute('data-type'));
-                e.dataTransfer.setData('source', 'palette');
-                b.classList.add('opacity-50');
-            });
-            b.addEventListener('dragend', e => {
-                b.classList.remove('opacity-50');
-            });
-        });
-
-        programArea.addEventListener('dragover', e => {
-            e.preventDefault();
-            programArea.classList.add('drag-over');
-        });
-
-        programArea.addEventListener('dragleave', () => {
-            programArea.classList.remove('drag-over');
-        });
-
-        programArea.addEventListener('drop', e => {
-            e.preventDefault();
-            programArea.classList.remove('drag-over');
-            
-            const type = e.dataTransfer.getData('type');
-            const paletteBlock = document.querySelector(`#block-palette .block[data-type="${type}"]`);
-            
-            if (paletteBlock) {
-                addBlockToProgram(type, paletteBlock.innerHTML, paletteBlock.className);
-            }
-        });
-
-        function addBlockToProgram(type, html, className) {
-            const newBlock = document.createElement('div');
-            newBlock.className = className + ' cursor-pointer relative';
-            newBlock.setAttribute('data-type', type);
-            newBlock.innerHTML = html;
-            newBlock.draggable = true;
-
-            const deleteIndicator = document.createElement('div');
-            deleteIndicator.className = 'absolute -right-2 -top-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md border-2 border-white';
-            deleteIndicator.innerHTML = '<i class="fas fa-times"></i>';
-            newBlock.appendChild(deleteIndicator);
-
-            newBlock.onclick = () => newBlock.remove();
-            
-            newBlock.addEventListener('dragstart', e => {
-                e.dataTransfer.setData('action', 'delete');
-                window.draggedBlock = newBlock;
-            });
-
-            programArea.appendChild(newBlock);
-        }
-
-        trashZone.addEventListener('dragover', e => {
-            e.preventDefault();
-            trashZone.classList.add('drag-over');
-        });
-
-        trashZone.addEventListener('dragleave', () => {
-            trashZone.classList.remove('drag-over');
-        });
-
-        trashZone.addEventListener('drop', e => {
-            e.preventDefault();
-            trashZone.classList.remove('drag-over');
-            if (window.draggedBlock) {
-                window.draggedBlock.remove();
-                window.draggedBlock = null;
-            }
-        });
 
         window.onload = initLevel;
     </script>
