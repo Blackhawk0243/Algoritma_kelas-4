@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlgoQuest: Petualangan Robot Penyelamat</title>
+    <title>AlgoQuest: Petualangan Robot Kelas 4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -11,7 +11,7 @@
 
         body {
             font-family: 'Quicksand', sans-serif;
-            background: #e0f2fe;
+            background: #e0f2fe; /* Tema Biru Kelas 4 */
         }
 
         h1, h2, h3 { font-family: 'Fredoka One', cursive; }
@@ -35,10 +35,15 @@
         }
         .grid-cell.lava { 
             background-color: #fca5a5; 
-            box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.2);
+            box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.4);
+            animation: pulseLava 2s infinite alternate;
         }
 
-        /* Style Blok Puzzle */
+        @keyframes pulseLava {
+            0% { background-color: #fca5a5; }
+            100% { background-color: #f87171; }
+        }
+
         .block {
             cursor: pointer;
             user-select: none;
@@ -54,27 +59,19 @@
             font-size: 14px;
         }
 
-        .block:hover {
-            filter: brightness(1.1);
-            transform: translateY(-2px);
-        }
-
-        .block:active { 
-            transform: scale(0.95); 
-            border-bottom-width: 0;
-            margin-top: 4px;
-        }
+        .block:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .block:active { transform: scale(0.95); border-bottom-width: 0; margin-top: 4px; }
 
         #program-area .block {
             margin-bottom: 8px;
             padding: 10px;
-            animation: slideIn 0.3s ease-out;
+            animation: slideIn 0.2s ease-out;
             width: 100%;
         }
 
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+            from { opacity: 0; transform: scale(0.9) translateX(-10px); }
+            to { opacity: 1; transform: scale(1) translateX(0); }
         }
 
         .block-executing {
@@ -94,34 +91,20 @@
             transition: all 0.3s;
         }
 
-        .code-slot.drag-over {
-            background: #dbeafe;
-            border-color: #3b82f6;
-        }
+        .code-slot.drag-over { background: #dbeafe; border-color: #3b82f6; }
 
-        .modal-overlay {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-        }
+        .modal-overlay { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Select Dropdown Styling */
-        select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
     </style>
 </head>
-<body class="bg-sky-50 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
-    <div id="game-container" class="max-w-6xl mx-auto p-4 flex flex-col flex-1 w-full gap-4">
-        <!-- Header -->
+    <div id="game-container" class="max-w-7xl mx-auto p-4 flex flex-col flex-1 w-full gap-4">
         <header class="flex justify-between items-center bg-white p-4 rounded-3xl shadow-sm border-b-4 border-blue-100 flex-wrap gap-2">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 p-2 md:p-3 rounded-2xl text-white shadow-lg">
@@ -129,8 +112,6 @@
                 </div>
                 <div>
                     <h1 class="text-xl md:text-2xl text-blue-600 leading-none">AlgoQuest</h1>
-                    
-                    <!-- Fitur Pemilih Level Langsung -->
                     <div class="flex items-center gap-1 mt-1 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200 inline-block">
                         <span class="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-tighter">Level</span>
                         <div class="relative inline-flex items-center">
@@ -153,23 +134,19 @@
             </div>
         </header>
 
-        <!-- Layout responsif -->
         <main class="flex flex-col lg:flex-row flex-1 gap-6 pb-8">
-            
-            <!-- Area Board -->
             <div class="w-full lg:w-[60%] lg:order-2 bg-white p-4 md:p-6 rounded-[32px] shadow-xl flex flex-col items-center justify-center relative border-b-8 border-slate-200 order-1">
                 <div class="w-full bg-blue-50 p-3 rounded-2xl border-l-4 border-blue-500 mb-4 flex gap-3 items-center">
                     <i class="fas fa-bullseye text-blue-500 text-xl"></i>
                     <p class="text-xs md:text-sm font-bold text-blue-800" id="mission-text">Bantu Robot!</p>
                 </div>
 
-                <div class="w-full max-w-md mx-auto aspect-square relative flex items-center justify-center">
+                <div class="w-full max-w-lg mx-auto aspect-square relative flex items-center justify-center">
                     <div id="grid-board" class="grid gap-1 md:gap-1.5 border-4 border-slate-100 p-1 md:p-2 bg-slate-50 rounded-2xl shadow-inner w-full h-full">
                         <!-- Grid cells dihasilkan oleh JS -->
                     </div>
                 </div>
 
-                <!-- Navigasi Indikator -->
                 <div class="absolute bottom-4 right-4 bg-white/95 p-3 rounded-2xl border-2 border-blue-50 shadow-xl flex items-center gap-3">
                     <div id="direction-arrow" class="text-xl text-blue-600 transition-transform duration-300">
                         <i class="fas fa-location-arrow"></i>
@@ -178,15 +155,16 @@
                 </div>
             </div>
 
-            <!-- Area Pemrograman -->
             <div class="w-full lg:w-[40%] flex flex-col gap-3 lg:order-1 order-2">
                 <div class="bg-white p-4 md:p-5 rounded-[32px] shadow-xl flex flex-col border-b-8 border-slate-200 h-full">
                     <p class="text-[10px] md:text-xs font-bold text-slate-400 mb-3 uppercase text-center tracking-widest italic">Ketuk atau Tarik blok ke kotak bawah</p>
                     
-                    <!-- Palet Blok -->
                     <div id="block-palette" class="grid grid-cols-2 gap-2 mb-4">
                         <div class="block bg-blue-500 text-white" draggable="true" ondragstart="handleDragStart(event, 'move')" onclick="addBlock('move')">
                             <i class="fas fa-walking"></i> Maju
+                        </div>
+                        <div class="block bg-emerald-500 text-white" draggable="true" ondragstart="handleDragStart(event, 'jump')" onclick="addBlock('jump')">
+                            <i class="fas fa-angle-double-up"></i> Lompat
                         </div>
                         <div class="block bg-indigo-500 text-white" draggable="true" ondragstart="handleDragStart(event, 'turn-right')" onclick="addBlock('turn-right')">
                             <i class="fas fa-arrow-rotate-right"></i> Kanan
@@ -194,7 +172,7 @@
                         <div class="block bg-indigo-500 text-white" draggable="true" ondragstart="handleDragStart(event, 'turn-left')" onclick="addBlock('turn-left')">
                             <i class="fas fa-arrow-rotate-left"></i> Kiri
                         </div>
-                        <div class="block bg-purple-600 text-white" draggable="true" ondragstart="handleDragStart(event, 'loop-3')" onclick="addBlock('loop-3')">
+                        <div class="block bg-purple-600 text-white col-span-2 justify-center" draggable="true" ondragstart="handleDragStart(event, 'loop-3')" onclick="addBlock('loop-3')">
                             <i class="fas fa-repeat"></i> 3x Maju
                         </div>
                     </div>
@@ -203,7 +181,6 @@
                         <i class="fas fa-scroll mr-2 text-orange-500"></i> Alur Algoritma:
                     </h3>
                     
-                    <!-- Drop Area -->
                     <div id="program-area" class="flex-1 code-slot p-3 space-y-2" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleDrop(event)">
                         <div id="empty-hint" class="h-full flex items-center justify-center text-slate-300 text-center p-4">
                             <p class="text-sm">Kotak urutan masih kosong...</p>
@@ -217,18 +194,16 @@
                     </div>
                 </div>
             </div>
-
         </main>
     </div>
 
-    <!-- Modals -->
     <div id="success-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4">
         <div class="bg-white p-8 rounded-[40px] max-w-sm w-full text-center shadow-2xl border-b-8 border-blue-200">
             <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-trophy text-4xl text-yellow-500"></i>
             </div>
-            <h2 class="text-2xl text-blue-600 mb-2">KEREN BANGET!</h2>
-            <p class="text-slate-500 font-bold mb-6">Algoritma kamu sempurna. Ayo lanjut ke level berikutnya!</p>
+            <h2 class="text-2xl text-blue-600 mb-2 font-black">KEREN BANGET!</h2>
+            <p class="text-slate-500 font-bold mb-6">Algoritma kamu sempurna. Lanjut ke level berikutnya!</p>
             <button onclick="nextLevel()" class="w-full bg-blue-500 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-600 shadow-lg border-b-4 border-blue-700 active:border-b-0 active:translate-y-1 transition-all">LANJUTKAN <i class="fas fa-chevron-right ml-2"></i></button>
         </div>
     </div>
@@ -238,41 +213,51 @@
             <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="fas fa-bug text-4xl text-red-500"></i>
             </div>
-            <h2 class="text-2xl text-red-500 mb-2">Butuh Perbaikan!</h2>
-            <p class="text-slate-500 font-bold mb-6" id="error-message">Robot menabrak tembok atau jatuh ke lava. Ayo periksa urutanmu!</p>
-            <button onclick="closeModals()" class="w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg hover:bg-slate-800 shadow-lg border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 transition-all">COBA LAGI</button>
+            <h2 class="text-2xl text-red-500 mb-2 font-black">Butuh Perbaikan!</h2>
+            <p class="text-slate-500 font-bold mb-6" id="error-message">Robot menabrak tembok atau jatuh ke lava. Coba lagi ya!</p>
+            <button onclick="closeModals()" class="w-full bg-slate-700 text-white py-4 rounded-2xl font-bold text-lg hover:bg-slate-800 shadow-lg border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 transition-all">DEBUG (COBA LAGI)</button>
         </div>
     </div>
 
     <script>
-        // --- 15 LEVEL DATA YANG SUDAH DIPERBAIKI (TIDAK ADA JALAN BUNTU) ---
         const LEVELS = [
-            { id: 1, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 4, y: 0 }, walls: [], lava: [], message: "Level 1: Dasar. Maju lurus ke atas, putar kanan, lalu maju ke Kristal." },
-            { id: 2, gridSize: 5, start: { x: 0, y: 4, dir: 1 }, end: { x: 4, y: 4 }, walls: [], lava: [{x:2, y:4}], message: "Level 2: Awas ada api! Cari jalan aman untuk memutarinya." },
-            { id: 3, gridSize: 6, start: { x: 0, y: 5, dir: 1 }, end: { x: 5, y: 5 }, walls: [], lava: [], message: "Level 3: Jalan panjang. Gunakan blok '3x Maju' agar lebih cepat." },
-            { id: 4, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 2, y: 2 }, walls: [{x:1, y:4}, {x:3, y:2}], lava: [{x:2, y:4}, {x:2, y:3}], message: "Level 4: Kristal ada di tengah rintangan. Hindari Lava!" },
-            { id: 5, gridSize: 5, start: { x: 0, y: 4, dir: 1 }, end: { x: 4, y: 0 }, walls: [{x:1, y:1}, {x:1, y:2}, {x:1, y:3}, {x:2, y:3}, {x:3, y:3}], lava: [], message: "Level 5: Jalur berkelok. Lewati pinggiran luar dinding." },
-            // Level 6 Diperbaiki: S-Shape yang sangat jelas
-            { id: 6, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:0,y:2},{x:1,y:2},{x:2,y:2},{x:3,y:2},{x:4,y:2},  {x:1,y:4},{x:2,y:4},{x:3,y:4},{x:4,y:4},{x:5,y:4}], lava: [], message: "Level 6: Buat pola huruf 'S'. Jalan tembus ada di ujung-ujung dinding." },
-            { id: 7, gridSize: 5, start: { x: 0, y: 2, dir: 1 }, end: { x: 4, y: 2 }, walls: [], lava: [{x:2, y:1}, {x:2, y:2}, {x:2, y:3}], message: "Level 7: Tembok Lava! Kamu harus memutar lewat celah aman di ujung." },
-            { id: 8, gridSize: 7, start: { x: 0, y: 6, dir: 0 }, end: { x: 6, y: 0 }, walls: [{x:1, y:1}, {x:2, y:2}, {x:3, y:3}, {x:4, y:4}, {x:5, y:5}], lava: [], message: "Level 8: Ruangan luas. Cari jalan di sekeliling batu bersusun." },
-            // Level 9 Diperbaiki: Zig zag yang rapi dan terukur
-            { id: 9, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:2,y:0},{x:2,y:1},{x:2,y:2},{x:2,y:3}, {x:4,y:2},{x:4,y:3},{x:4,y:4},{x:4,y:5}], lava: [], message: "Level 9: Jalur Zig-Zag ganda. Pikirkan langkah belokanmu!" },
+            // Level 1-5: Pengenalan Maju & Belok
+            { id: 1, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 4, y: 0 }, walls: [], lava: [], message: "Level 1: Dasar. Maju ke Utara, putar, lalu ambil Kristal." },
+            { id: 2, gridSize: 5, start: { x: 0, y: 4, dir: 1 }, end: { x: 4, y: 4 }, walls: [], lava: [{x:2, y:4}], message: "Level 2: Awas ada api! Cari jalan memutar." },
+            { id: 3, gridSize: 6, start: { x: 0, y: 5, dir: 1 }, end: { x: 5, y: 5 }, walls: [], lava: [], message: "Level 3: Jalan sangat panjang. Gunakan blok '3x Maju'." },
+            { id: 4, gridSize: 5, start: { x: 0, y: 4, dir: 0 }, end: { x: 2, y: 2 }, walls: [{x:1, y:4}, {x:3, y:2}], lava: [{x:2, y:4}, {x:2, y:3}], message: "Level 4: Hindari Lava dan menyingkir dari rintangan dinding." },
+            { id: 5, gridSize: 6, start: { x: 0, y: 5, dir: 0 }, end: { x: 5, y: 0 }, walls: [{x:2,y:2},{x:2,y:3},{x:3,y:2},{x:3,y:3}], lava: [], message: "Level 5: Ada gunung besar di tengah. Jalanlah memutar." },
+            
+            // Level 6-10: Pengenalan Kompleksitas (Labirin)
+            { id: 6, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:0,y:2},{x:1,y:2},{x:2,y:2},{x:3,y:2},{x:4,y:2},  {x:1,y:4},{x:2,y:4},{x:3,y:4},{x:4,y:4},{x:5,y:4}], lava: [], message: "Level 6: Buat pola huruf 'S'. Jalan tembus ada di ujung dinding." },
+            { id: 7, gridSize: 7, start: { x: 0, y: 6, dir: 0 }, end: { x: 6, y: 0 }, walls: [{x:1,y:1},{x:2,y:2},{x:3,y:3},{x:4,y:4},{x:5,y:5}], lava: [], message: "Level 7: Tangga raksasa. Buat tangga algoritma untuk menyusurinya." },
+            { id: 8, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:2,y:0},{x:2,y:1},{x:2,y:2},{x:2,y:3}, {x:4,y:2},{x:4,y:3},{x:4,y:4},{x:4,y:5}], lava: [], message: "Level 8: Zig-Zag ganda. Pikirkan langkah belokanmu!" },
+            { id: 9, gridSize: 7, start: { x: 0, y: 6, dir: 1 }, end: { x: 6, y: 6 }, walls: [{x:3,y:1},{x:3,y:2},{x:3,y:3},{x:3,y:4},{x:3,y:5},{x:3,y:6}], lava: [], message: "Level 9: Koridor tertutup rapat. Kamu harus jalan melambung jauh!" },
             { id: 10, gridSize: 8, start: { x: 0, y: 7, dir: 0 }, end: { x: 7, y: 0 }, walls: [{x:1, y:6}, {x:2, y:5}, {x:3, y:4}, {x:4, y:3}, {x:5, y:2}, {x:6, y:1}], lava: [], message: "Level 10: Maraton Algoritma! Berjalan menyusuri rintangan diagonal." },
-            // Level 11 Diperbaiki: U-Shape
-            { id: 11, gridSize: 7, start: { x: 0, y: 6, dir: 1 }, end: { x: 6, y: 6 }, walls: [{x:3,y:1},{x:3,y:2},{x:3,y:3},{x:3,y:4},{x:3,y:5},{x:3,y:6}], lava: [], message: "Level 11: Koridor diblokir. Putari rintangan hingga ke sisi lain." },
-            { id: 12, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:1, y:1}, {x:2, y:2}, {x:3, y:3}, {x:4, y:4}], lava: [{x:2, y:1}, {x:1, y:2}, {x:4, y:3}, {x:3, y:4}], message: "Level 12: Labirin kotak-kotak beracun." },
-            { id: 13, gridSize: 8, start: { x: 0, y: 4, dir: 1 }, end: { x: 7, y: 4 }, walls: [{x:4, y:0}, {x:4, y:1}, {x:4, y:2}, {x:4, y:3}, {x:4, y:5}, {x:4, y:6}, {x:4, y:7}], lava: [], message: "Level 13: Cari satu-satunya pintu rahasia di dinding besar!" },
-            // Level 14 Diperbaiki: Jelas ada jalur darat
-            { id: 14, gridSize: 7, start: { x: 0, y: 3, dir: 1 }, end: { x: 6, y: 3 }, walls: [], lava: [{x:3,y:1},{x:3,y:2},{x:3,y:3},{x:3,y:4},{x:3,y:5}], message: "Level 14: Maju terhalang lautan lava. Menyingkir ke jalur aman paling ujung!" },
-            { id: 15, gridSize: 9, start: { x: 0, y: 8, dir: 0 }, end: { x: 8, y: 0 }, walls: [{x:1, y:1}, {x:3, y:3}, {x:5, y:5}, {x:7, y:7}], lava: [{x:0, y:4}, {x:1, y:4}, {x:2, y:4}, {x:3, y:4}, {x:5, y:4}, {x:6, y:4}, {x:7, y:4}, {x:8, y:4}], message: "LEVEL 15 (AKHIR): Sungai lava membelah peta! Temukan jembatan utamanya!" }
+
+            // Level 11-15: Pengenalan Mekanik "Lompat" (Jump)
+            { id: 11, gridSize: 5, start: { x: 0, y: 2, dir: 1 }, end: { x: 4, y: 2 }, walls: [], lava: [{x:2,y:0},{x:2,y:1},{x:2,y:2},{x:2,y:3},{x:2,y:4}], message: "Level 11: JALAN BUNTU! Sungai lava menutupi jalan. Gunakan blok 'LOMPAT'!" },
+            { id: 12, gridSize: 6, start: { x: 0, y: 3, dir: 1 }, end: { x: 5, y: 3 }, walls: [{x:2,y:0},{x:2,y:1},{x:2,y:2},{x:2,y:3},{x:2,y:4},{x:2,y:5}], lava: [], message: "Level 12: Tembok besar menghadang. Robot bisa melompati 1 blok tembok!" },
+            { id: 13, gridSize: 6, start: { x: 0, y: 0, dir: 1 }, end: { x: 5, y: 5 }, walls: [{x:1, y:1}, {x:3, y:3}], lava: [{x:1,y:0},{x:1,y:2},{x:1,y:3},{x:1,y:4},{x:1,y:5}, {x:3,y:0},{x:3,y:1},{x:3,y:2},{x:3,y:4},{x:3,y:5}], message: "Level 13: Dua sungai rintangan. Lompati tepat di bagian yang aman!" },
+            { id: 14, gridSize: 7, start: { x: 0, y: 6, dir: 0 }, end: { x: 6, y: 0 }, walls: [{x:0,y:3},{x:1,y:3},{x:2,y:3},{x:4,y:3},{x:5,y:3},{x:6,y:3}], lava: [{x:3,y:3}], message: "Level 14: Ada celah api di tengah tembok raksasa. Lompatlah melewatinya." },
+            { id: 15, gridSize: 8, start: { x: 0, y: 4, dir: 1 }, end: { x: 7, y: 4 }, walls: [{x:2,y:0},{x:2,y:1},{x:2,y:2},{x:2,y:3},{x:2,y:4},{x:2,y:5},{x:2,y:6},{x:2,y:7}], lava: [{x:5,y:0},{x:5,y:1},{x:5,y:2},{x:5,y:3},{x:5,y:4},{x:5,y:5},{x:5,y:6},{x:5,y:7}], message: "Level 15: Rintangan Ganda! Lompati Tembok, lalu lompati Lava." },
+
+            // Level 16-25: Ujian Master (Kombinasi Maju, Loop, dan Lompat)
+            { id: 16, gridSize: 7, start: { x: 0, y: 0, dir: 1 }, end: { x: 6, y: 6 }, walls: [{x:1,y:1},{x:2,y:2},{x:3,y:3},{x:4,y:4},{x:5,y:5}], lava: [{x:1,y:0},{x:3,y:2},{x:5,y:4}], message: "Level 16: Anak Tangga Panas. Lompati setiap sudut lava." },
+            { id: 17, gridSize: 6, start: { x: 0, y: 5, dir: 0 }, end: { x: 5, y: 0 }, walls: [], lava: [{x:0,y:2},{x:1,y:2},{x:2,y:2},{x:3,y:2},{x:4,y:2},{x:5,y:2}, {x:0,y:4},{x:1,y:4},{x:2,y:4},{x:3,y:4},{x:4,y:4},{x:5,y:4}], message: "Level 17: Garis-garis api. Susun lompatanmu berturut-turut!" },
+            { id: 18, gridSize: 8, start: { x: 0, y: 7, dir: 1 }, end: { x: 7, y: 0 }, walls: [{x:2,y:5},{x:2,y:6},{x:2,y:7}, {x:5,y:0},{x:5,y:1},{x:5,y:2}], lava: [{x:2,y:0},{x:2,y:1},{x:2,y:2},{x:2,y:3},{x:2,y:4}, {x:5,y:3},{x:5,y:4},{x:5,y:5},{x:5,y:6},{x:5,y:7}], message: "Level 18: Labirin Tembok dan Lava. Kombinasi jalan dan lompat sangat penting." },
+            { id: 19, gridSize: 7, start: { x: 3, y: 6, dir: 0 }, end: { x: 3, y: 0 }, walls: [{x:2,y:3},{x:4,y:3}], lava: [{x:0,y:3},{x:1,y:3},{x:5,y:3},{x:6,y:3}, {x:3,y:3}], message: "Level 19: Jembatan api! Lompati tengah-tengahnya." },
+            { id: 20, gridSize: 8, start: { x: 0, y: 0, dir: 1 }, end: { x: 7, y: 7 }, walls: [{x:2,y:2},{x:3,y:3},{x:4,y:4},{x:5,y:5}], lava: [{x:2,y:0},{x:2,y:1},{x:2,y:3},{x:2,y:4},{x:2,y:5},{x:2,y:6},{x:2,y:7}], message: "Level 20: Tembok Lava panjang. Cari titik yang bisa dilompati dengan aman." },
+            { id: 21, gridSize: 9, start: { x: 0, y: 8, dir: 1 }, end: { x: 8, y: 0 }, walls: [{x:1,y:1},{x:3,y:3},{x:5,y:5},{x:7,y:7}], lava: [{x:1,y:4},{x:2,y:4},{x:3,y:4},{x:4,y:4},{x:5,y:4},{x:6,y:4},{x:7,y:4}], message: "Level 21: Pulau kecil di tengah lautan api. Hati-hati jangan tergelincir." },
+            { id: 22, gridSize: 7, start: { x: 0, y: 3, dir: 0 }, end: { x: 6, y: 3 }, walls: [{x:3,y:0},{x:3,y:1},{x:3,y:5},{x:3,y:6}], lava: [{x:2,y:2},{x:2,y:3},{x:2,y:4}, {x:4,y:2},{x:4,y:3},{x:4,y:4}], message: "Level 22: Benteng Lava ganda. Kamu butuh 2 kali lompatan hebat." },
+            { id: 23, gridSize: 8, start: { x: 0, y: 7, dir: 0 }, end: { x: 7, y: 7 }, walls: [{x:1,y:0},{x:1,y:1},{x:1,y:2},{x:1,y:3},{x:1,y:4},{x:1,y:5}, {x:3,y:2},{x:3,y:3},{x:3,y:4},{x:3,y:5},{x:3,y:6},{x:3,y:7}, {x:5,y:0},{x:5,y:1},{x:5,y:2},{x:5,y:3},{x:5,y:4},{x:5,y:5}], lava: [{x:1,y:6},{x:3,y:1},{x:5,y:6}], message: "Level 23: Labirin Ular. Jangan putar jika bisa melompati rintangan ujung!" },
+            { id: 24, gridSize: 9, start: { x: 4, y: 8, dir: 0 }, end: { x: 4, y: 0 }, walls: [{x:2,y:3},{x:2,y:4},{x:2,y:5}, {x:6,y:3},{x:6,y:4},{x:6,y:5}], lava: [{x:0,y:4},{x:1,y:4},{x:3,y:4},{x:4,y:4},{x:5,y:4},{x:7,y:4},{x:8,y:4}], message: "Level 24: Kunci rintangan tengah ada pada lompatan super presisi." },
+            { id: 25, gridSize: 10, start: { x: 0, y: 9, dir: 1 }, end: { x: 9, y: 0 }, walls: [{x:2,y:2},{x:2,y:3},{x:2,y:4},{x:2,y:5},{x:2,y:6},{x:2,y:7}, {x:7,y:2},{x:7,y:3},{x:7,y:4},{x:7,y:5},{x:7,y:6},{x:7,y:7}], lava: [{x:1,y:1},{x:3,y:1},{x:5,y:1},{x:8,y:1}, {x:1,y:8},{x:3,y:8},{x:5,y:8},{x:8,y:8}, {x:4,y:4},{x:4,y:5},{x:5,y:4},{x:5,y:5}], message: "LEVEL 25: GRAND FINALE! Kombinasi semua rintangan dan lautan lava. Buktikan kejeniusanmu!" }
         ];
 
         let currentLevelIndex = 0;
         let robotPos = { x: 0, y: 0, dir: 0 };
         let isRunning = false;
-
-        // --- CORE FUNCTIONS ---
 
         function initSelector() {
             const selector = document.getElementById('level-selector');
@@ -296,7 +281,6 @@
             const level = LEVELS[currentLevelIndex];
             robotPos = { ...level.start };
             
-            // Update selector and texts
             document.getElementById('level-selector').value = currentLevelIndex;
             document.getElementById('mission-text').innerText = level.message;
             updateDirectionUI();
@@ -317,7 +301,7 @@
                         cell.innerHTML = '<i class="fas fa-mountain text-slate-400 text-sm md:text-lg"></i>';
                     } else if (level.lava.some(l => l.x === x && l.y === y)) {
                         cell.classList.add('lava');
-                        cell.innerHTML = '<i class="fas fa-fire text-red-500 text-sm md:text-lg animate-pulse"></i>';
+                        cell.innerHTML = '<i class="fas fa-fire text-red-500 text-sm md:text-lg"></i>';
                     } else if (level.end.x === x && level.end.y === y) {
                         cell.innerHTML = '<div class="robot-anim"><i class="fas fa-gem text-yellow-400 text-xl md:text-2xl drop-shadow-md"></i></div>';
                     }
@@ -343,7 +327,7 @@
             robot.innerHTML = `
                 <div class="relative">
                     <i class="fas fa-robot text-blue-600 text-2xl md:text-3xl drop-shadow-lg"></i>
-                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
                 </div>
             `;
             cell.appendChild(robot);
@@ -351,13 +335,11 @@
 
         function updateDirectionUI() {
             const dirs = ["UTARA", "TIMUR", "SELATAN", "BARAT"];
-            const rotation = robotPos.dir * 90 - 45; // adjustment for location-arrow icon
+            const rotation = robotPos.dir * 90 - 45; 
             
             document.getElementById('direction-indicator').innerText = dirs[robotPos.dir];
             document.getElementById('direction-arrow').style.transform = `rotate(${rotation}deg)`;
         }
-
-        // --- COMMAND LOGIC ---
 
         function addBlock(type) {
             if (isRunning) return;
@@ -366,14 +348,18 @@
             if (emptyHint) emptyHint.remove();
             
             const b = document.createElement('div');
-            const color = getBlockColor(type);
+            let color = 'blue';
+            if(type === 'jump') color = 'emerald';
+            else if(type.includes('turn')) color = 'indigo';
+            else if(type === 'loop-3') color = 'purple';
+
             b.className = `block bg-${color}-500 text-white shadow-md`;
             b.setAttribute('data-type', type);
             
-            let icon = '';
-            let text = '';
+            let icon = ''; let text = '';
             switch(type) {
-                case 'move': icon = 'walking'; text = 'Maju'; break;
+                case 'move': icon = 'walking'; text = 'Maju 1x'; break;
+                case 'jump': icon = 'angle-double-up'; text = 'Lompat'; break;
                 case 'turn-right': icon = 'arrow-rotate-right'; text = 'Kanan'; break;
                 case 'turn-left': icon = 'arrow-rotate-left'; text = 'Kiri'; break;
                 case 'loop-3': icon = 'repeat'; text = '3x Maju'; break;
@@ -387,12 +373,7 @@
                 </button>
             `;
             
-            b.onclick = (e) => {
-                // Safeguard against clicking remove button
-            };
-            
             programArea.appendChild(b);
-            // Scroll to bottom automatically
             programArea.scrollTop = programArea.scrollHeight;
         }
 
@@ -403,16 +384,19 @@
             }
         }
 
-        function getBlockColor(type) {
-            if (type === 'move') return 'blue';
-            if (type.includes('turn')) return 'indigo';
-            return 'purple';
-        }
-
         function clearProgram() {
             if (isRunning) return;
             document.getElementById('program-area').innerHTML = '';
             checkEmpty();
+        }
+
+        function handleDragStart(e, type) { e.dataTransfer.setData('blockType', type); }
+        function handleDrop(e) {
+            e.preventDefault();
+            const programArea = document.getElementById('program-area');
+            programArea.classList.remove('drag-over');
+            const type = e.dataTransfer.getData('blockType');
+            if (type) addBlock(type);
         }
 
         async function runProgram() {
@@ -440,13 +424,11 @@
                 return;
             }
 
-            // Scroll program area to top before starting
             document.getElementById('program-area').scrollTop = 0;
 
             for (let step of sequence) {
                 if (step.el) {
                     step.el.classList.add('block-executing');
-                    // Ensure the executing block is visible in scroll area
                     step.el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
                 
@@ -463,7 +445,6 @@
                 if (step.el) step.el.classList.remove('block-executing');
             }
 
-            // Victory Check
             const level = LEVELS[currentLevelIndex];
             if (robotPos.x === level.end.x && robotPos.y === level.end.y) {
                 showSuccess();
@@ -485,11 +466,14 @@
             let newX = robotPos.x;
             let newY = robotPos.y;
 
-            if (type === 'move') {
-                if (robotPos.dir === 0) newY--;
-                if (robotPos.dir === 1) newX++;
-                if (robotPos.dir === 2) newY++;
-                if (robotPos.dir === 3) newX--;
+            // Logika Maju dan Lompat
+            if (type === 'move' || type === 'jump') {
+                let dist = (type === 'jump') ? 2 : 1; // Lompat akan berpindah 2 kotak langsung
+                
+                if (robotPos.dir === 0) newY -= dist;
+                if (robotPos.dir === 1) newX += dist;
+                if (robotPos.dir === 2) newY += dist;
+                if (robotPos.dir === 3) newX -= dist;
             } else if (type === 'turn-right') {
                 robotPos.dir = (robotPos.dir + 1) % 4;
                 renderRobot();
@@ -502,42 +486,30 @@
                 return true;
             }
 
-            // Constraints (Batas luar, tembok, lava)
+            // Pengecekan Batas Peta
             if (newX < 0 || newX >= level.gridSize || newY < 0 || newY >= level.gridSize) return false;
+            
+            // Pengecekan Tembok (Brak!)
             if (level.walls.some(w => w.x === newX && w.y === newY)) return false;
             
+            // Pengecekan Lava (Cebur!)
             if (level.lava.some(l => l.x === newX && l.y === newY)) {
                 robotPos.x = newX; robotPos.y = newY;
                 renderRobot();
                 return false;
             }
 
+            // Jika mendarat di area aman, pindahkan robot.
             robotPos.x = newX;
             robotPos.y = newY;
             renderRobot();
             return true;
         }
 
-        // --- DRAG AND DROP (FOR LAPTOP) ---
-
-        function handleDragStart(e, type) {
-            e.dataTransfer.setData('blockType', type);
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            const programArea = document.getElementById('program-area');
-            programArea.classList.remove('drag-over');
-            const type = e.dataTransfer.getData('blockType');
-            if (type) addBlock(type);
-        }
-
-        // --- UI HELPERS ---
-
         function showSuccess() { document.getElementById('success-modal').classList.remove('hidden'); }
         function showError(msg) {
             if (msg) document.getElementById('error-message').innerText = msg;
-            else document.getElementById('error-message').innerText = "Robot menabrak rintangan atau jatuh ke lava! Ayo perbaiki kodemu.";
+            else document.getElementById('error-message').innerText = "Robot menabrak tembok atau jatuh ke lava! Ayo perbaiki kodemu.";
             document.getElementById('error-modal').classList.remove('hidden');
         }
         function closeModals() {
@@ -548,7 +520,7 @@
         function nextLevel() {
             currentLevelIndex++;
             if (currentLevelIndex >= LEVELS.length) {
-                alert("🏆 LUAR BIASA! Kamu adalah Master Algoritma yang hebat! Game Tamat.");
+                alert("🏆 LUAR BIASA! Kamu telah menyelesaikan semua 25 level AlgoQuest!");
                 currentLevelIndex = 0;
             }
             document.getElementById('success-modal').classList.add('hidden');
@@ -562,7 +534,6 @@
             updateDirectionUI();
         }
 
-        // Jalankan saat pertama kali dimuat
         window.onload = () => {
             initSelector();
             initLevel();
